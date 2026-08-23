@@ -1,0 +1,3963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetChart Pro - Veterinary Student PIMS Training Simulator</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        background-color: #f3f4f6;
+        color: #1f2937;
+    }
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
+    #sidebar {
+        width: 320px;
+        background-color: #1f2937;
+        color: white;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        border-right: 1px solid #374151;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .sidebar-header {
+        border-bottom: 2px solid #374151;
+        padding-bottom: 10px;
+        margin-bottom: 5px;
+    }
+
+    .patient-card {
+        background: #374151;
+        padding: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        border-left: 4px solid #10b981;
+        margin-bottom: 10px;
+        transition: 0.2s;
+    }
+
+    .patient-card:hover,
+    .patient-card.active {
+        background: #4b5563;
+        border-left-color: #3b82f6;
+    }
+
+    .patient-card-name {
+        font-weight: bold;
+        font-size: 0.95rem;
+    }
+
+    .patient-card-details {
+        color: #d1d5db;
+        font-size: 0.78rem;
+        margin-top: 3px;
+    }
+
+    .patient-card-actions {
+        margin-top: 8px;
+        display: flex;
+        gap: 5px;
+    }
+
+    /* =========================
+       TRAINING NOTICE
+    ========================= */
+
+    .training-banner {
+        background: #78350f;
+        border: 1px solid #f59e0b;
+        color: #fef3c7;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .training-banner strong {
+        color: #fbbf24;
+    }
+
+    /* =========================
+       MASTER PROBLEM LIST
+    ========================= */
+
+    .mpl-container {
+        background: #111827;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #374151;
+    }
+
+    .mpl-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1f2937;
+        padding: 6px;
+        border-radius: 4px;
+        margin-top: 6px;
+        font-size: 0.85rem;
+    }
+
+    .status-resolved {
+        text-decoration: line-through;
+        color: #9ca3af;
+    }
+
+    /* =========================
+       FORMS
+    ========================= */
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+
+    .input-group label {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #9ca3af;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #4b5563;
+        background: #1f2937;
+        color: white;
+        border-radius: 6px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    .light-input {
+        background: white !important;
+        color: #1f2937 !important;
+        border-color: #d1d5db !important;
+    }
+
+    /* =========================
+       MAIN PANEL
+    ========================= */
+
+    #main-panel {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0;
+    }
+
+    .patient-header {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .patient-header-main {
+        min-width: 220px;
+    }
+
+    .patient-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* =========================
+       VITALS
+    ========================= */
+
+    .vitals-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        flex: 1;
+        max-width: 700px;
+    }
+
+    .vital-box {
+        background: #f9fafb;
+        padding: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        text-align: center;
+        min-width: 75px;
+    }
+
+    .vital-box label {
+        display: block;
+        font-size: 0.6rem;
+        font-weight: bold;
+        color: #6b7280;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .vital-value {
+        font-weight: bold;
+        color: #1f2937;
+        font-size: 0.85rem;
+    }
+
+    /* =========================
+       WIDGETS
+    ========================= */
+
+    .widget-container {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .subsection-title {
+        font-size: 1rem;
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    /* =========================
+       CASE SCENARIO
+    ========================= */
+
+    .scenario-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-left: 5px solid #2563eb;
+        padding: 16px;
+        border-radius: 6px;
+        line-height: 1.55;
+    }
+
+    .scenario-label {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #1d4ed8;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    /* =========================
+       SOAP
+    ========================= */
+
+    .soap-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .soap-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .soap-field label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #4b5563;
+    }
+
+    .soap-field textarea {
+        background: white;
+        color: #1f2937;
+        border-color: #d1d5db;
+        height: 120px;
+        resize: vertical;
+    }
+
+    /* =========================
+       VITAL INPUTS
+    ========================= */
+
+    .vitals-input-row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .vital-input-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #4b5563;
+        margin-bottom: 4px;
+    }
+
+    .vitals-input-row input,
+    .vitals-input-row select {
+        background: white;
+        color: #1f2937;
+        border-color: #d1d5db;
+    }
+
+    /* =========================
+       VACCINES
+    ========================= */
+
+    .vaccine-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .vax-card {
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        border-radius: 6px;
+        background: #f9fafb;
+        position: relative;
+    }
+
+    .vax-card.rabies {
+        border-left: 4px solid #ef4444;
+    }
+
+    .vax-card.core {
+        border-left: 4px solid #3b82f6;
+    }
+
+    .vax-card.other {
+        border-left: 4px solid #10b981;
+    }
+
+    .vax-warning {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: none;
+    }
+
+    /* =========================
+       PRESCRIPTIONS
+    ========================= */
+
+    .prescription-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .prescription-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .prescription-card {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #7c3aed;
+        border-radius: 6px;
+        padding: 14px;
+        margin-bottom: 10px;
+    }
+
+    /* =========================
+       CLINICAL RECORDS
+    ========================= */
+
+    .history-card {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 15px;
+    }
+
+    .history-sec {
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+
+    .history-label {
+        font-weight: bold;
+        color: #4b5563;
+        display: inline-block;
+        width: 45px;
+    }
+
+    .record-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .record-type {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-green {
+        background: #10b981;
+    }
+
+    .btn-green:hover {
+        background: #059669;
+    }
+
+    .btn-red {
+        background: #ef4444;
+    }
+
+    .btn-red:hover {
+        background: #dc2626;
+    }
+
+    .btn-gray {
+        background: #6b7280;
+    }
+
+    .btn-gray:hover {
+        background: #4b5563;
+    }
+
+    .btn-purple {
+        background: #7c3aed;
+    }
+
+    .btn-purple:hover {
+        background: #6d28d9;
+    }
+
+    .btn-sm {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .toast {
+        min-width: 280px;
+        background: #111827;
+        color: white;
+        padding: 14px 18px;
+        border-radius: 7px;
+        margin-bottom: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        animation: slideIn 0.25s ease;
+    }
+
+    .toast.success {
+        border-left: 4px solid #10b981;
+    }
+
+    .toast.warning {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .toast.error {
+        border-left: 4px solid #ef4444;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* =========================
+       EMPTY STATE
+    ========================= */
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+
+    /* =========================
+       STUDENT REFERENCE / GUIDES
+    ========================= */
+
+    .reference-actions {
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-top:10px;
+    }
+
+    .reference-panel {
+        position:fixed;
+        top:0;
+        right:-440px;
+        width:420px;
+        max-width:92vw;
+        height:100vh;
+        background:white;
+        color:#1f2937;
+        z-index:10000;
+        box-shadow:-8px 0 25px rgba(0,0,0,.18);
+        transition:right .25s ease;
+        overflow-y:auto;
+        padding:24px;
+    }
+
+    .reference-panel.open { right:0; }
+    .reference-overlay {
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.35);
+        z-index:9999;
+        display:none;
+    }
+    .reference-overlay.open { display:block; }
+    .reference-panel h3 { margin-top:0; }
+    .reference-section {
+        margin:18px 0;
+        padding:14px;
+        border:1px solid #e5e7eb;
+        border-radius:8px;
+        background:#f9fafb;
+    }
+    .reference-table { width:100%; border-collapse:collapse; }
+    .reference-table th,.reference-table td {
+        border-bottom:1px solid #e5e7eb;
+        padding:7px 5px;
+        text-align:left;
+        vertical-align:top;
+    }
+    .reference-table th { font-size:.8rem; color:#4b5563; }
+    .multi-select-help {
+        font-size:.72rem;
+        color:#6b7280;
+        margin-top:4px;
+    }
+    .training-hint {
+        margin-top:12px;
+        padding:12px 14px;
+        background:#ecfdf5;
+        border:1px solid #a7f3d0;
+        border-left:5px solid #10b981;
+        border-radius:7px;
+        line-height:1.45;
+    }
+    .skills-grid {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0,1fr));
+        gap:8px 18px;
+    }
+    .skill-item { display:flex; gap:8px; align-items:flex-start; font-size:.88rem; }
+    .skill-item input { width:auto; margin-top:3px; }
+    .objective-template-row {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:10px;
+        align-items:end;
+        margin-bottom:8px;
+    }
+    .template-note { font-size:.75rem; color:#6b7280; margin-top:4px; }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 1200px) {
+        .vitals-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .vitals-input-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .vaccine-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 900px) {
+        body {
+            flex-direction: column;
+            height: auto;
+        }
+
+        #sidebar {
+            width: 100%;
+            max-height: 500px;
+        }
+
+        .patient-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .vitals-grid {
+            max-width: none;
+        }
+
+        .soap-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .prescription-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* =========================
+       PRINT
+    ========================= */
+
+    @media print {
+        body {
+            display: block;
+            background: white;
+        }
+
+        #sidebar,
+        .no-print,
+        button,
+        #toast-container {
+            display: none !important;
+        }
+
+        #main-panel {
+            padding: 0;
+            overflow: visible;
+        }
+
+        .widget-container,
+        .patient-header {
+            box-shadow: none;
+            border: 1px solid #ddd;
+            page-break-inside: avoid;
+        }
+
+        .training-banner {
+            display: block !important;
+            background: white;
+            color: black;
+            border: 1px solid #999;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<div id="sidebar">
+
+    <div class="sidebar-header">
+        <h3>🏥 VetChart Pro</h3>
+        <p style="font-size:0.8rem; color:#9ca3af; margin:0;">
+            Veterinary Student PIMS Training Simulator
+        </p>
+    </div>
+
+    <div class="training-banner">
+        <strong>🎓 TRAINING ENVIRONMENT</strong><br>
+        All patients and records are simulated for educational practice only.
+        This system is not intended for real clinical use.
+    </div>
+
+    <!-- Registration -->
+    <div style="background:#374151; padding:12px; border-radius:6px;">
+        <h4 style="margin:0 0 10px 0; font-size:0.9rem;">
+            🐾 Admit New Patient
+        </h4>
+
+        <div class="input-group">
+            <label>Pet Name</label>
+            <input type="text" id="new-name" placeholder="Bella, Max, etc.">
+        </div>
+
+        <div class="input-group">
+            <label>Species</label>
+            <select id="new-species">
+                <option value="Canine">Canine (Dog)</option>
+                <option value="Feline">Feline (Cat)</option>
+                <option value="Equine">Equine (Horse)</option>
+                <option value="Bovine">Bovine (Cattle)</option>
+                <option value="Exotic">Exotic</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Breed</label>
+            <input type="text" id="new-breed" placeholder="Golden Retriever">
+        </div>
+
+        <div class="input-group">
+            <label>Case Scenario</label>
+            <textarea
+                id="new-scenario"
+                rows="4"
+                placeholder="Example: 4-year-old Labrador presents for vomiting and lethargy for 24 hours..."
+                style="resize:vertical;"
+            ></textarea>
+        </div>
+
+        <button
+            class="btn btn-green"
+            style="width:100%; font-size:0.85rem;"
+            onclick="createNewPatient()"
+        >
+            Register New Case
+        </button>
+    </div>
+
+    <!-- Master Problem List -->
+    <div class="mpl-container">
+
+        <h4 style="margin:0 0 8px 0; font-size:0.85rem; color:#f3f4f6; text-transform:uppercase;">
+            📋 Master Problem List
+        </h4>
+
+        <div style="display:flex; gap:5px;">
+            <input
+                type="text"
+                id="new-problem"
+                placeholder="Add diagnosis..."
+                style="padding:6px; font-size:0.8rem;"
+            >
+
+            <button
+                class="btn btn-green btn-sm"
+                onclick="addProblem()"
+            >
+                Add
+            </button>
+        </div>
+
+        <div id="mpl-items-list"></div>
+
+    </div>
+
+    <h4 style="margin:10px 0 5px 0; font-size:0.85rem; color:#9ca3af; text-transform:uppercase;">
+        Active Patient Roster
+    </h4>
+
+    <div id="patient-list-container"></div>
+
+    <div style="margin-top:auto; padding-top:10px; border-top:1px solid #374151;">
+        <div style="font-size:0.75rem; color:#9ca3af; text-transform:uppercase; margin-bottom:7px;">Student Resources</div>
+        <div class="reference-actions">
+            <button class="btn btn-sm" style="flex:1;" onclick="openReference('quick')">📚 Student Quick Reference</button>
+            <button class="btn btn-sm btn-green" style="flex:1;" onclick="openReference('ranges')">📊 Normal Reference Ranges</button>
+        </div>
+        <div class="reference-actions">
+            <button class="btn btn-sm btn-purple" style="flex:1;" onclick="openReference('meds')">💊 Medication Abbreviation Guide</button>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     MAIN PANEL
+========================= -->
+
+<div id="main-panel">
+
+    <div id="empty-workspace" class="widget-container empty-state">
+
+        <div class="empty-state-icon">🐾</div>
+
+        <h2>Veterinary Student Training Workspace</h2>
+
+        <p>
+            Select a patient from the roster to open their simulated medical record.
+        </p>
+
+        <p>
+            You can practice patient intake, vitals, SOAP documentation,
+            vaccines, prescriptions, problem lists, and clinical records.
+        </p>
+
+    </div>
+
+
+    <div id="patient-workspace" style="display:none;">
+
+        <!-- =========================
+             PATIENT HEADER
+        ========================= -->
+
+        <div class="patient-header">
+
+            <div class="patient-header-main">
+
+                <h2 style="margin:0 0 5px 0;">
+                    Patient:
+                    <span id="current-pt-name">None Selected</span>
+                </h2>
+
+                <p style="margin:0; color:#6b7280;">
+                    Species:
+                    <span id="current-pt-species">N/A</span>
+                    |
+                    Breed:
+                    <span id="current-pt-breed">N/A</span>
+                </p>
+
+            </div>
+
+            <div class="vitals-grid">
+
+                <div class="vital-box">
+                    <label>RR</label>
+                    <div class="vital-value" id="v-rr">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>HR</label>
+                    <div class="vital-value" id="v-hr">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>Weight</label>
+                    <div class="vital-value" id="v-weight">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>Temp</label>
+                    <div class="vital-value" id="v-temp">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>CRT</label>
+                    <div class="vital-value" id="v-crt">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>MM</label>
+                    <div class="vital-value" id="v-mm">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>Mentation</label>
+                    <div class="vital-value" id="v-mentation">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>BCS</label>
+                    <div class="vital-value" id="v-bcs">--</div>
+                </div>
+
+                <div class="vital-box">
+                    <label>Pulse</label>
+                    <div class="vital-value" id="v-pulse">--</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             CASE SCENARIO
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+                <span>📖 Case Scenario</span>
+
+                <button
+                    class="btn btn-sm no-print"
+                    onclick="editScenario()"
+                >
+                    Edit Scenario
+                </button>
+            </div>
+
+            <div class="scenario-box">
+
+                <div class="scenario-label">
+                    Student Case Prompt
+                </div>
+
+                <div id="case-scenario">
+                    No scenario entered.
+                </div>
+
+            </div>
+
+            <div id="species-training-hint" class="training-hint">
+                <strong>🐾 Training Hint</strong><br>
+                Open a patient to see species-aware history guidance.
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             VITALS ENTRY
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+                <span>🩺 Patient Vitals</span>
+            </div>
+
+            <div class="vitals-input-row">
+
+                <div class="vital-input-group">
+                    <label>RR (breaths/min)</label>
+                    <input type="number" id="input-rr" class="light-input">
+                </div>
+
+                <div class="vital-input-group">
+                    <label>HR (bpm)</label>
+                    <input type="number" id="input-hr" class="light-input">
+                </div>
+
+                <div class="vital-input-group">
+                    <label>Weight (lb)</label>
+                    <input type="number" step="0.1" id="input-weight" class="light-input">
+                </div>
+
+                <div class="vital-input-group">
+                    <label>Temperature (°F)</label>
+                    <input type="number" step="0.1" id="input-temp" class="light-input">
+                </div>
+
+                <div class="vital-input-group">
+                    <label>CRT</label>
+                    <select id="input-crt" class="light-input">
+                        <option value="">Select</option>
+                        <option value="<1 sec">&lt;1 sec</option>
+                        <option value="<2 sec">&lt;2 sec</option>
+                        <option value="2 sec">2 sec</option>
+                        <option value=">2 sec">&gt;2 sec</option>
+                        <option value="Not assessed">Not assessed</option>
+                    </select>
+                </div>
+
+                <div class="vital-input-group">
+                    <label>Mucous Membranes</label>
+                    <select id="input-mm" class="light-input">
+                        <option value="">Select</option>
+                        <option value="Pink / Moist">Pink / Moist</option>
+                        <option value="Pale">Pale</option>
+                        <option value="White">White</option>
+                        <option value="Icteric / Yellow">Icteric / Yellow</option>
+                        <option value="Cyanotic / Blue">Cyanotic / Blue</option>
+                        <option value="Brick Red">Brick Red</option>
+                        <option value="Tacky">Tacky</option>
+                        <option value="Dry">Dry</option>
+                        <option value="Injected">Injected</option>
+                        <option value="Not assessed">Not assessed</option>
+                    </select>
+                </div>
+
+                <div class="vital-input-group">
+                    <label>Responsiveness / Mentation</label>
+                    <select id="input-mentation" class="light-input" multiple size="5">
+                        <option value="BAR">BAR — Bright, Alert, Responsive</option>
+                        <option value="QAR">QAR — Quiet, Alert, Responsive</option>
+                        <option value="Depressed">Depressed</option>
+                        <option value="Obtunded">Obtunded</option>
+                        <option value="Stuporous">Stuporous</option>
+                        <option value="Comatose">Comatose</option>
+                        <option value="Anxious">Anxious</option>
+                        <option value="Aggressive">Aggressive</option>
+                        <option value="Not assessed">Not assessed</option>
+                    </select>
+                    <div class="multi-select-help">Ctrl-click (Windows) or Cmd-click (Mac) to select multiple descriptors.</div>
+                </div>
+
+                <div class="vital-input-group">
+                    <label id="bcs-label">BCS (1–9)</label>
+                    <select id="input-bcs" class="light-input">
+                        <option value="">Select BCS</option>
+                        <option value="1">1 — Very Thin</option>
+                        <option value="2">2 — Very Thin</option>
+                        <option value="3">3 — Thin</option>
+                        <option value="4">4 — Thin</option>
+                        <option value="5">5 — Ideal</option>
+                        <option value="6">6 — Overweight</option>
+                        <option value="7">7 — Overweight</option>
+                        <option value="8">8 — Obese</option>
+                        <option value="9">9 — Obese</option>
+                    </select>
+                </div>
+
+                <div class="vital-input-group">
+                    <label>Pulse Quality</label>
+                    <select id="input-pulse" class="light-input">
+                        <option value="">Select</option>
+                        <option value="Strong">Strong</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Weak">Weak</option>
+                        <option value="Bounding">Bounding</option>
+                        <option value="Thready">Thready</option>
+                        <option value="Not assessed">Not assessed</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <button class="btn btn-green" onclick="saveVitals()">
+                💾 Save Vitals
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             IMMUNIZATIONS
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+                <span>🛡️ Immunization Records & Certificates</span>
+
+                <button
+                    class="btn btn-sm btn-purple no-print"
+                    onclick="printVaccineCertificate()"
+                >
+                    📄 Vaccine Certificate
+                </button>
+            </div>
+
+            <div id="vaccine-duplicate-warning" class="vax-warning">
+                ⚠️ This patient already has a vaccine with the same name.
+                Review the existing vaccination history before administering another dose.
+            </div>
+
+            <div style="
+                background:#f3f4f6;
+                padding:12px;
+                border-radius:6px;
+                margin-bottom:15px;
+                display:flex;
+                gap:10px;
+                align-items:flex-end;
+                flex-wrap:wrap;
+            ">
+
+                <div style="flex:1; min-width:220px;">
+
+                    <label style="font-weight:bold; font-size:0.8rem; color:#4b5563;">
+                        Vaccine Name
+                    </label>
+
+                    <select
+                        id="vax-type"
+                        class="light-input"
+                        style="margin-top:5px;"
+                        onchange="checkDuplicateVaccine()"
+                    >
+
+                        <option value="Rabies (1-Year Certificate)">
+                            Rabies (1-Year Certificate)
+                        </option>
+
+                        <option value="Rabies (3-Year Certificate)">
+                            Rabies (3-Year Certificate)
+                        </option>
+
+                        <option value="DHPP / Core Canine Combination">
+                            DHPP (Canine Distemper/Parvo)
+                        </option>
+
+                        <option value="FVRCP / Core Feline Combination">
+                            FVRCP (Feline Viral Rhinotracheitis)
+                        </option>
+
+                        <option value="Bordetella (Kennel Cough)">
+                            Bordetella
+                        </option>
+
+                        <option value="Leptospirosis">
+                            Leptospirosis
+                        </option>
+
+                        <option value="Lyme">
+                            Lyme
+                        </option>
+
+                        <option value="Canine Influenza">
+                            Canine Influenza
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div style="width:160px;">
+
+                    <label style="font-weight:bold; font-size:0.8rem; color:#4b5563;">
+                        Date Given
+                    </label>
+
+                    <input
+                        type="date"
+                        id="vax-date"
+                        class="light-input"
+                        style="margin-top:5px;"
+                    >
+
+                </div>
+
+                <div style="width:160px;">
+
+                    <label style="font-weight:bold; font-size:0.8rem; color:#4b5563;">
+                        Lot Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vax-lot"
+                        class="light-input"
+                        placeholder="LOT-12345"
+                    >
+
+                </div>
+
+                <button
+                    class="btn btn-green"
+                    onclick="saveVaccine()"
+                >
+                    💾 Save Vaccine
+                </button>
+
+            </div>
+
+            <h4>Vaccination History</h4>
+
+            <div id="vaccine-history"></div>
+
+        </div>
+
+
+        <!-- =========================
+             SOAP
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+                <span>🩺 SOAP Clinical Note</span>
+            </div>
+
+            <div class="soap-grid">
+
+                <div class="soap-field">
+
+                    <label>Subjective / C/O — Complaint Of</label>
+
+                    <textarea
+                        id="soap-s"
+                        placeholder="Client history, presenting complaint, duration, appetite, vomiting, diarrhea, behavior, etc."
+                    ></textarea>
+
+                </div>
+
+                <div class="soap-field">
+
+                    <label>Objective</label>
+
+                    <div class="objective-template-row">
+                        <div>
+                            <select id="objective-template" class="light-input" onchange="applyObjectiveTemplate()">
+                                <option value="none">None / Freehand</option>
+                                <option value="complete">🐾 Complete Physical Examination</option>
+                                <option value="canine">Canine Physical Examination</option>
+                                <option value="feline">Feline Physical Examination</option>
+                            </select>
+                            <div class="template-note">Choose a structured template or keep Objective completely freehand.</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-gray no-print" onclick="clearObjectiveTemplate()">Clear</button>
+                    </div>
+
+                    <textarea
+                        id="soap-o"
+                        placeholder="Physical examination findings, vitals, diagnostics, etc."
+                    ></textarea>
+
+                </div>
+
+                <div class="soap-field">
+
+                    <label>Assessment</label>
+
+                    <textarea
+                        id="soap-a"
+                        placeholder="Problem list, differential diagnoses, working diagnosis, clinical interpretation..."
+                    ></textarea>
+
+                </div>
+
+                <div class="soap-field">
+
+                    <label>Plan</label>
+
+                    <textarea
+                        id="soap-p"
+                        placeholder="Diagnostics, treatment, medications, monitoring, follow-up, client communication..."
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <button
+                class="btn"
+                onclick="saveSOAP()"
+            >
+                💾 Save SOAP to Clinical Records
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             PRESCRIPTIONS
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+                <span>💊 Prescriptions & Medications</span>
+                <button class="btn btn-sm btn-purple no-print" onclick="openReference('meds')">Medication Abbreviation Guide</button>
+            </div>
+
+            <div class="prescription-grid">
+
+                <div class="input-group">
+                    <label>Medication</label>
+                    <input
+                        id="rx-medication"
+                        class="light-input"
+                        placeholder="Carprofen"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Strength / Concentration</label>
+                    <input
+                        id="rx-strength"
+                        class="light-input"
+                        placeholder="75 mg tablet"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Dosage</label>
+                    <input
+                        id="rx-dose"
+                        class="light-input"
+                        placeholder="1 tablet"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Route</label>
+                    <select id="rx-route" class="light-input">
+                        <option value="">Select Route</option>
+                        <option value="PO">PO - By mouth</option>
+                        <option value="IV">IV - Intravenous</option>
+                        <option value="IM">IM - Intramuscular</option>
+                        <option value="SQ">SQ - Subcutaneous</option>
+                        <option value="Topical">Topical</option>
+                        <option value="Otic">Otic</option>
+                        <option value="Ophthalmic">Ophthalmic</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Frequency</label>
+                    <input
+                        id="rx-frequency"
+                        class="light-input"
+                        placeholder="q12h"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Duration</label>
+                    <input
+                        id="rx-duration"
+                        class="light-input"
+                        placeholder="7 days"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Quantity</label>
+                    <input
+                        id="rx-quantity"
+                        class="light-input"
+                        placeholder="14 tablets"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>Refills</label>
+                    <input
+                        id="rx-refills"
+                        type="number"
+                        min="0"
+                        class="light-input"
+                        value="0"
+                    >
+                </div>
+
+                <div class="input-group full">
+
+                    <label>
+                        Prescription Directions / SIG
+                    </label>
+
+                    <textarea
+                        id="rx-directions"
+                        class="light-input"
+                        rows="3"
+                        placeholder="Example: Give 1 tablet by mouth every 12 hours for 7 days with food."
+                        style="resize:vertical;"
+                    ></textarea>
+
+                </div>
+
+                <div class="input-group full">
+
+                    <label>Prescription Notes</label>
+
+                    <textarea
+                        id="rx-notes"
+                        class="light-input"
+                        rows="2"
+                        placeholder="Additional student notes..."
+                        style="resize:vertical;"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <button
+                class="btn btn-purple"
+                onclick="savePrescription()"
+            >
+                💾 Save Prescription
+            </button>
+
+            <div id="prescription-history" style="margin-top:15px;"></div>
+
+        </div>
+
+
+        <!-- =========================
+             STUDENT SKILLS PROGRESS
+        ========================= -->
+
+        <div class="widget-container">
+            <div class="section-title">
+                <span>🎓 Student Skills Progress</span>
+                <span id="skills-progress-text" style="font-size:.75rem; color:#6b7280;">0 / 18 complete</span>
+            </div>
+            <div id="student-skills" class="skills-grid"></div>
+        </div>
+
+
+        <!-- =========================
+             CLINICAL RECORDS
+        ========================= -->
+
+        <div class="widget-container">
+
+            <div class="section-title">
+
+                <span>📚 Clinical Records</span>
+
+                <button
+                    class="btn btn-sm no-print"
+                    onclick="printMedicalRecord()"
+                >
+                    🖨️ Print Medical Record
+                </button>
+
+            </div>
+
+            <p style="color:#6b7280; font-size:0.9rem;">
+                Saved SOAP notes, prescriptions, vaccine entries, and other
+                clinical documentation appear here in chronological order.
+            </p>
+
+            <div id="clinical-records"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="reference-overlay" class="reference-overlay" onclick="closeReference()"></div>
+
+<div id="reference-panel" class="reference-panel" aria-hidden="true">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h3 id="reference-panel-title">📚 Student Quick Reference</h3>
+        <button class="btn btn-sm btn-gray" onclick="closeReference()">✕ Close</button>
+    </div>
+    <div id="reference-panel-content"></div>
+</div>
+
+<div id="toast-container"></div>
+
+
+<script>
+
+/* =========================================================
+   VETCHART PRO
+   Veterinary Student PIMS Training Simulator
+   ========================================================= */
+
+const STORAGE_KEY = "vetchart_pro_training_data";
+
+let appData = {
+    patients: [],
+    currentPatientId: null
+};
+
+
+/* =========================================================
+   LOCAL STORAGE
+   ========================================================= */
+
+function saveAppData() {
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(appData)
+    );
+
+}
+
+
+function loadAppData() {
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved) {
+
+        try {
+
+            appData = JSON.parse(saved);
+
+        } catch (error) {
+
+            console.error("Could not load saved data.", error);
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+
+function generateId(prefix = "id") {
+
+    return prefix + "_" +
+        Date.now().toString(36) +
+        "_" +
+        Math.random().toString(36).substring(2, 8);
+
+}
+
+
+function getCurrentPatient() {
+
+    return appData.patients.find(
+        patient => patient.id === appData.currentPatientId
+    );
+
+}
+
+
+function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+function showToast(message, type = "success") {
+
+    const container =
+        document.getElementById("toast-container");
+
+    const toast =
+        document.createElement("div");
+
+    toast.className = `toast ${type}`;
+
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+
+        toast.remove();
+
+    }, 3500);
+
+}
+
+
+/* =========================================================
+   PATIENT CREATION
+   ========================================================= */
+
+function createNewPatient() {
+
+    const name =
+        document.getElementById("new-name").value.trim();
+
+    const species =
+        document.getElementById("new-species").value;
+
+    const breed =
+        document.getElementById("new-breed").value.trim();
+
+    const scenario =
+        document.getElementById("new-scenario").value.trim();
+
+    if (!name) {
+
+        showToast(
+            "Please enter the patient's name.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const patient = {
+
+        id: generateId("patient"),
+
+        name,
+
+        species,
+
+        breed: breed || "Unknown",
+
+        scenario:
+            scenario ||
+            "No training scenario has been entered for this patient.",
+
+        vitals: {
+
+            rr: "",
+            hr: "",
+            weight: "",
+            temp: "",
+            crt: "",
+            mm: "",
+            mentation: [],
+            bcs: "",
+            pulseQuality: ""
+
+        },
+        skills: {},
+
+        problems: [],
+
+        vaccines: [],
+
+        prescriptions: [],
+
+        clinicalRecords: [],
+
+        createdAt: new Date().toISOString()
+
+    };
+
+    appData.patients.push(patient);
+
+    appData.currentPatientId = patient.id;
+
+    saveAppData();
+
+    document.getElementById("new-name").value = "";
+    document.getElementById("new-breed").value = "";
+    document.getElementById("new-scenario").value = "";
+
+    renderPatientRoster();
+
+    openPatient(patient.id);
+
+    showToast(
+        `${patient.name}'s training case was created successfully.`
+    );
+
+}
+
+
+/* =========================================================
+   PATIENT ROSTER
+   ========================================================= */
+
+function renderPatientRoster() {
+
+    const container =
+        document.getElementById("patient-list-container");
+
+    container.innerHTML = "";
+
+    if (appData.patients.length === 0) {
+
+        container.innerHTML = `
+            <div style="color:#9ca3af; font-size:0.8rem;">
+                No patient cases yet.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    appData.patients.forEach(patient => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "patient-card" +
+            (
+                patient.id === appData.currentPatientId
+                    ? " active"
+                    : ""
+            );
+
+        card.onclick = () =>
+            openPatient(patient.id);
+
+        card.innerHTML = `
+
+            <div class="patient-card-name">
+                🐾 ${escapeHTML(patient.name)}
+            </div>
+
+            <div class="patient-card-details">
+                ${escapeHTML(patient.species)}
+                •
+                ${escapeHTML(patient.breed)}
+            </div>
+
+            <div class="patient-card-actions">
+
+                <button
+                    class="btn btn-red btn-sm"
+                    onclick="event.stopPropagation(); deletePatient('${patient.id}')"
+                >
+                    🗑️ Delete
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================================
+   DELETE PATIENT
+   ========================================================= */
+
+function deletePatient(patientId) {
+
+    const patient =
+        appData.patients.find(
+            p => p.id === patientId
+        );
+
+    if (!patient) return;
+
+    const confirmed =
+        confirm(
+            `Delete the training case for ${patient.name}?\n\n` +
+            `This will permanently remove the simulated patient, ` +
+            `vitals, vaccines, prescriptions, SOAP notes, and clinical records from this browser.`
+        );
+
+    if (!confirmed) return;
+
+    appData.patients =
+        appData.patients.filter(
+            p => p.id !== patientId
+        );
+
+    if (appData.currentPatientId === patientId) {
+
+        appData.currentPatientId =
+            appData.patients.length
+                ? appData.patients[0].id
+                : null;
+
+    }
+
+    saveAppData();
+
+    renderPatientRoster();
+
+    if (appData.currentPatientId) {
+
+        openPatient(appData.currentPatientId);
+
+    } else {
+
+        showEmptyWorkspace();
+
+    }
+
+    showToast(
+        `${patient.name}'s training case was deleted.`,
+        "warning"
+    );
+
+}
+
+
+/* =========================================================
+   OPEN PATIENT
+   ========================================================= */
+
+function openPatient(patientId) {
+
+    const patient =
+        appData.patients.find(
+            p => p.id === patientId
+        );
+
+    if (!patient) return;
+
+    appData.currentPatientId =
+        patientId;
+
+    saveAppData();
+
+    document.getElementById(
+        "empty-workspace"
+    ).style.display = "none";
+
+    document.getElementById(
+        "patient-workspace"
+    ).style.display = "block";
+
+    document.getElementById(
+        "current-pt-name"
+    ).textContent = patient.name;
+
+    document.getElementById(
+        "current-pt-species"
+    ).textContent = patient.species;
+
+    document.getElementById(
+        "current-pt-breed"
+    ).textContent = patient.breed;
+
+    document.getElementById(
+        "case-scenario"
+    ).textContent = patient.scenario;
+
+    loadVitalsIntoForm(patient);
+
+    renderVitals(patient);
+
+    renderPatientProblems();
+
+    renderVaccineHistory();
+
+    renderPrescriptionHistory();
+
+    renderClinicalRecords();
+    updateSpeciesTrainingHint(patient);
+    renderStudentSkills();
+
+    renderPatientRoster();
+
+    checkDuplicateVaccine();
+
+}
+
+
+/* =========================================================
+   EMPTY WORKSPACE
+   ========================================================= */
+
+function showEmptyWorkspace() {
+
+    document.getElementById(
+        "empty-workspace"
+    ).style.display = "block";
+
+    document.getElementById(
+        "patient-workspace"
+    ).style.display = "none";
+
+}
+
+
+/* =========================================================
+   SCENARIO EDIT
+   ========================================================= */
+
+function editScenario() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    const newScenario =
+        prompt(
+            "Edit the training case scenario:",
+            patient.scenario
+        );
+
+    if (newScenario === null) return;
+
+    patient.scenario =
+        newScenario.trim() ||
+        "No training scenario has been entered.";
+
+    saveAppData();
+
+    document.getElementById(
+        "case-scenario"
+    ).textContent = patient.scenario;
+
+    showToast(
+        "Case scenario updated."
+    );
+
+}
+
+
+/* =========================================================
+   VITALS
+   ========================================================= */
+
+function loadVitalsIntoForm(patient) {
+
+    const v = patient.vitals || {};
+
+    document.getElementById("input-rr").value = v.rr || "";
+    document.getElementById("input-hr").value = v.hr || "";
+    document.getElementById("input-weight").value = v.weight || "";
+    document.getElementById("input-temp").value = v.temp || "";
+    document.getElementById("input-crt").value = v.crt || "";
+    document.getElementById("input-mm").value = v.mm || "";
+    document.getElementById("input-bcs").value = v.bcs || "";
+    document.getElementById("input-pulse").value = v.pulseQuality || "";
+
+    const mentationSelect = document.getElementById("input-mentation");
+    const selectedMentation = Array.isArray(v.mentation) ? v.mentation : (v.mentation ? [v.mentation] : []);
+    Array.from(mentationSelect.options).forEach(option => {
+        option.selected = selectedMentation.includes(option.value);
+    });
+
+    const bcsLabel = document.getElementById("bcs-label");
+    if (bcsLabel) {
+        bcsLabel.textContent = patient.species === "Feline" ? "BCS (Feline 1–9)" : "BCS (Canine 1–9)";
+    }
+}
+
+function renderVitals(patient) {
+
+    const v = patient.vitals || {};
+
+    document.getElementById("v-rr").textContent = v.rr ? `${v.rr} breaths/min` : "--";
+    document.getElementById("v-hr").textContent = v.hr ? `${v.hr} bpm` : "--";
+    document.getElementById("v-weight").textContent = v.weight ? `${v.weight} lb` : "--";
+    document.getElementById("v-temp").textContent = v.temp ? `${v.temp} °F` : "--";
+    document.getElementById("v-crt").textContent = v.crt || "--";
+    document.getElementById("v-mm").textContent = v.mm || "--";
+    document.getElementById("v-mentation").textContent = Array.isArray(v.mentation) && v.mentation.length ? v.mentation.join(", ") : (v.mentation || "--");
+    document.getElementById("v-bcs").textContent = v.bcs ? `${v.bcs} / 9` : "--";
+    document.getElementById("v-pulse").textContent = v.pulseQuality || "--";
+}
+
+function saveVitals() {
+
+    const patient = getCurrentPatient();
+
+    if (!patient) {
+        showToast("Select a patient first.", "warning");
+        return;
+    }
+
+    const mentation = Array.from(document.getElementById("input-mentation").selectedOptions).map(o => o.value);
+
+    patient.vitals = {
+        rr: document.getElementById("input-rr").value,
+        hr: document.getElementById("input-hr").value,
+        weight: document.getElementById("input-weight").value,
+        temp: document.getElementById("input-temp").value,
+        crt: document.getElementById("input-crt").value,
+        mm: document.getElementById("input-mm").value,
+        mentation,
+        bcs: document.getElementById("input-bcs").value,
+        pulseQuality: document.getElementById("input-pulse").value
+    };
+
+    saveAppData();
+    renderVitals(patient);
+    showToast("✅ Patient vitals saved successfully.");
+}
+
+
+/* =========================================================
+   STUDENT REFERENCES
+   ========================================================= */
+
+const abbreviationSections = {
+    vitals: [
+        ["HR", "Heart Rate"], ["RR", "Respiratory Rate"], ["CRT", "Capillary Refill Time"],
+        ["MM", "Mucous Membranes"], ["BCS", "Body Condition Score"], ["BAR", "Bright, Alert, Responsive"],
+        ["QAR", "Quiet, Alert, Responsive"]
+    ],
+    history: [
+        ["C/O", "Complaint Of"], ["Hx", "History"], ["Dx", "Diagnosis"], ["Ddx", "Differential Diagnosis"],
+        ["Tx", "Treatment"], ["Rx", "Prescription"]
+    ],
+    medication: [
+        ["PO", "By mouth / orally"], ["IV", "Intravenous"], ["IM", "Intramuscular"], ["SQ / SC", "Subcutaneous"],
+        ["SID", "Once daily"], ["BID", "Twice daily"], ["TID", "Three times daily"], ["QID", "Four times daily"],
+        ["PRN", "As needed"], ["NPO", "Nothing by mouth"]
+    ]
+};
+
+const medicationGuide = [
+    ["PO", "By mouth / orally"], ["IV", "Intravenous"], ["IM", "Intramuscular"], ["SQ / SC", "Subcutaneous"],
+    ["PRN", "As needed"], ["q24h", "Every 24 hours"], ["q12h", "Every 12 hours"], ["q8h", "Every 8 hours"],
+    ["q6h", "Every 6 hours"], ["SID", "Once daily"], ["BID", "Twice daily"], ["TID", "Three times daily"],
+    ["QID", "Four times daily"], ["SIG", "Prescription directions / instructions"], ["mg", "Milligram"],
+    ["kg", "Kilogram"], ["mL", "Milliliter"], ["tab", "Tablet"], ["cap", "Capsule"], ["gtt", "Drop"],
+    ["OD", "Right eye"], ["OS", "Left eye"], ["OU", "Both eyes"], ["AD", "Right ear"], ["AS", "Left ear"], ["AU", "Both ears"]
+];
+
+const normalRanges = {
+    Canine: {
+        Temperature: "Training reference: approximately 100.5–102.5 °F",
+        "Heart rate": "Training reference: approximately 60–140 bpm; size, age and stress can affect this.",
+        "Respiratory rate": "Training reference: approximately 10–30 breaths/min",
+        CRT: "Training reference: <2 seconds",
+        "Mucous membranes": "Training reference: pink and moist",
+        "Pulse quality": "Training reference: strong, regular, synchronous",
+        BCS: "1–9 scale: 5 is ideal; 1–2 very thin, 3–4 thin, 6–7 overweight, 8–9 obese"
+    },
+    Feline: {
+        Temperature: "Training reference: approximately 100.5–102.5 °F",
+        "Heart rate": "Training reference: approximately 140–220 bpm; stress can markedly increase this.",
+        "Respiratory rate": "Training reference: approximately 20–30 breaths/min",
+        CRT: "Training reference: <2 seconds",
+        "Mucous membranes": "Training reference: pink and moist",
+        "Pulse quality": "Training reference: strong, regular, synchronous",
+        BCS: "1–9 scale: 5 is ideal; 1–2 very thin, 3–4 thin, 6–7 overweight, 8–9 obese"
+    }
+};
+
+function openReference(type) {
+    const title = document.getElementById("reference-panel-title");
+    const content = document.getElementById("reference-panel-content");
+    const patient = getCurrentPatient();
+    const species = patient && (patient.species === "Canine" || patient.species === "Feline") ? patient.species : "Canine";
+
+    if (type === "quick") {
+        title.textContent = "📚 Student Quick Reference";
+        content.innerHTML = `
+            <div class="reference-section"><h4>Vitals</h4>${makeReferenceTable(abbreviationSections.vitals)}</div>
+            <div class="reference-section"><h4>History / Assessment</h4>${makeReferenceTable(abbreviationSections.history)}</div>
+            <div class="reference-section"><h4>Medication</h4>${makeReferenceTable(abbreviationSections.medication)}</div>
+        `;
+    } else if (type === "meds") {
+        title.textContent = "💊 Medication Abbreviation Guide";
+        content.innerHTML = `<div class="reference-section">${makeReferenceTable(medicationGuide)}</div>`;
+    } else {
+        title.textContent = `📊 ${species} Normal Reference Ranges`;
+        content.innerHTML = `
+            <div class="reference-section">
+                <h4>🐕🐈 ${species} Reference Guide</h4>
+                ${makeReferenceTable(Object.entries(normalRanges[species]))}
+                <p style="font-size:.75rem;color:#6b7280;margin-bottom:0;">Training/reference ranges only. Actual ranges can vary with age, size, breed, stress level, disease state, and the individual patient.</p>
+            </div>
+        `;
+    }
+    document.getElementById("reference-panel").classList.add("open");
+    document.getElementById("reference-overlay").classList.add("open");
+    document.getElementById("reference-panel").setAttribute("aria-hidden", "false");
+}
+
+function makeReferenceTable(rows) {
+    return `<table class="reference-table"><thead><tr><th>Abbreviation / Item</th><th>Meaning / Training Reference</th></tr></thead><tbody>${rows.map(row => `<tr><td><strong>${escapeHTML(row[0])}</strong></td><td>${escapeHTML(row[1])}</td></tr>`).join("")}</tbody></table>`;
+}
+
+function closeReference() {
+    document.getElementById("reference-panel").classList.remove("open");
+    document.getElementById("reference-overlay").classList.remove("open");
+    document.getElementById("reference-panel").setAttribute("aria-hidden", "true");
+}
+
+function updateSpeciesTrainingHint(patient) {
+    const hint = document.getElementById("species-training-hint");
+    if (!hint) return;
+    if (patient.species === "Canine") {
+        hint.innerHTML = `<strong>🐕 Canine Training Hint</strong><br>Remember to consider breed, size, vaccination history, parasite prevention, diet, exercise, and environmental exposure when taking the history.`;
+    } else if (patient.species === "Feline") {
+        hint.innerHTML = `<strong>🐈 Feline Training Hint</strong><br>Remember to ask about indoor/outdoor status, litter box habits, appetite, water intake, urination, household changes, stressors, and multi-cat environment.`;
+    } else {
+        hint.innerHTML = `<strong>🐾 Species-Aware Training Hint</strong><br>Consider species, breed, size, environment, preventive care, diet, and individual patient factors when taking the history.`;
+    }
+}
+
+const studentSkillList = [
+    "Patient intake", "Complete history", "Record vital signs", "Assess mentation", "Assess mucous membranes", "Assess CRT",
+    "Assess pulse quality", "Assign BCS", "Create a problem list", "Write SOAP note", "Complete physical examination",
+    "Document vaccinations", "Document medications", "Create prescription", "Develop differential diagnoses", "Create treatment plan",
+    "Document client communication", "Review clinical record"
+];
+
+function renderStudentSkills() {
+    const patient = getCurrentPatient();
+    const container = document.getElementById("student-skills");
+    const progress = document.getElementById("skills-progress-text");
+    if (!patient || !container) return;
+    patient.skills = patient.skills || {};
+    const complete = studentSkillList.filter(skill => patient.skills[skill]).length;
+    progress.textContent = `${complete} / ${studentSkillList.length} complete`;
+    container.innerHTML = studentSkillList.map((skill, index) => `
+        <label class="skill-item">
+            <input type="checkbox" ${patient.skills[skill] ? "checked" : ""} onchange="toggleSkill(${index}, this.checked)">
+            <span>${escapeHTML(skill)}</span>
+        </label>
+    `).join("");
+}
+
+function toggleSkill(index, checked) {
+    const patient = getCurrentPatient();
+    if (!patient) return;
+    patient.skills = patient.skills || {};
+    patient.skills[studentSkillList[index]] = checked;
+    saveAppData();
+    renderStudentSkills();
+}
+
+const physicalExamTemplate = `PHYSICAL EXAMINATION
+General Appearance / Mentation:
+BCS:
+Weight:
+Temperature:
+Heart Rate:
+Respiratory Rate:
+Pulse Quality:
+CRT:
+Mucous Membranes:
+
+Eyes:
+Ears:
+Nose:
+Oral Cavity / Teeth:
+
+Peripheral Lymph Nodes:
+
+Cardiovascular:
+Respiratory:
+
+Abdomen:
+GI:
+
+Skin / Coat:
+Musculoskeletal:
+Neurologic:
+Urogenital:
+Rectal / Perineal:
+
+Pain Assessment:
+Other Findings:`;
+
+const canineExamTemplate = `CANINE PHYSICAL EXAMINATION
+General Appearance / Mentation:
+BCS:
+Weight:
+Temperature:
+Heart Rate:
+Respiratory Rate:
+Pulse Quality:
+CRT:
+Mucous Membranes:
+
+Eyes:
+Ears:
+Nose:
+Oral Cavity / Teeth:
+Peripheral Lymph Nodes:
+Cardiovascular:
+Respiratory:
+Abdomen:
+GI:
+Skin / Coat:
+Musculoskeletal:
+Neurologic:
+Urogenital:
+Rectal / Perineal:
+Pain Assessment:
+Other Findings:`;
+
+const felineExamTemplate = `FELINE PHYSICAL EXAMINATION
+General Appearance / Mentation:
+BCS:
+Weight:
+Temperature:
+Heart Rate:
+Respiratory Rate:
+Pulse Quality:
+CRT:
+Mucous Membranes:
+
+Eyes:
+Ears:
+Nose:
+Oral Cavity / Teeth:
+Peripheral Lymph Nodes:
+Cardiovascular:
+Respiratory:
+Abdomen:
+GI:
+Skin / Coat:
+Musculoskeletal:
+Neurologic:
+Urogenital:
+Rectal / Perineal:
+Pain Assessment:
+Other Findings:`;
+
+function applyObjectiveTemplate() {
+    const select = document.getElementById("objective-template");
+    const objective = document.getElementById("soap-o");
+    if (!select || !objective || select.value === "none") return;
+    const templates = { complete: physicalExamTemplate, canine: canineExamTemplate, feline: felineExamTemplate };
+    objective.value = templates[select.value] || "";
+}
+
+function clearObjectiveTemplate() {
+    const objective = document.getElementById("soap-o");
+    const select = document.getElementById("objective-template");
+    if (objective) objective.value = "";
+    if (select) select.value = "none";
+}
+
+
+/* =========================================================
+   MASTER PROBLEM LIST
+   ========================================================= */
+
+function addProblem() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const input =
+        document.getElementById("new-problem");
+
+    const problem =
+        input.value.trim();
+
+    if (!problem) return;
+
+    if (!patient.problems) {
+        patient.problems = [];
+    }
+
+    patient.problems.push({
+
+        id: generateId("problem"),
+
+        name: problem,
+
+        resolved: false,
+
+        createdAt: new Date().toISOString()
+
+    });
+
+    input.value = "";
+
+    saveAppData();
+
+    renderPatientProblems();
+
+    showToast(
+        "Problem added to the Master Problem List."
+    );
+
+}
+
+
+function renderPatientProblems() {
+
+    const patient =
+        getCurrentPatient();
+
+    const container =
+        document.getElementById(
+            "mpl-items-list"
+        );
+
+    container.innerHTML = "";
+
+    if (!patient || !patient.problems.length) {
+
+        container.innerHTML = `
+            <div style="font-size:0.75rem; color:#9ca3af; margin-top:8px;">
+                No problems documented.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    patient.problems.forEach(problem => {
+
+        const item =
+            document.createElement("div");
+
+        item.className = "mpl-item";
+
+        item.innerHTML = `
+
+            <span
+                class="${problem.resolved ? "status-resolved" : ""}"
+            >
+                ${escapeHTML(problem.name)}
+            </span>
+
+            <div style="display:flex; gap:4px;">
+
+                <button
+                    class="btn btn-sm"
+                    onclick="toggleProblem('${problem.id}')"
+                >
+                    ${problem.resolved ? "Reopen" : "Resolve"}
+                </button>
+
+                <button
+                    class="btn btn-red btn-sm"
+                    onclick="deleteProblem('${problem.id}')"
+                >
+                    ×
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(item);
+
+    });
+
+}
+
+
+function toggleProblem(problemId) {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    const problem =
+        patient.problems.find(
+            p => p.id === problemId
+        );
+
+    if (!problem) return;
+
+    problem.resolved =
+        !problem.resolved;
+
+    saveAppData();
+
+    renderPatientProblems();
+
+}
+
+
+function deleteProblem(problemId) {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    patient.problems =
+        patient.problems.filter(
+            p => p.id !== problemId
+        );
+
+    saveAppData();
+
+    renderPatientProblems();
+
+}
+
+
+/* =========================================================
+   VACCINES
+   ========================================================= */
+
+function checkDuplicateVaccine() {
+
+    const patient =
+        getCurrentPatient();
+
+    const warning =
+        document.getElementById(
+            "vaccine-duplicate-warning"
+        );
+
+    if (!patient) {
+
+        warning.style.display = "none";
+
+        return;
+
+    }
+
+    const selected =
+        document.getElementById(
+            "vax-type"
+        ).value;
+
+    const exists =
+        patient.vaccines.some(
+            v => v.name === selected
+        );
+
+    warning.style.display =
+        exists ? "block" : "none";
+
+}
+
+
+function saveVaccine() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const name =
+        document.getElementById(
+            "vax-type"
+        ).value;
+
+    const date =
+        document.getElementById(
+            "vax-date"
+        ).value;
+
+    const lot =
+        document.getElementById(
+            "vax-lot"
+        ).value.trim();
+
+    if (!date) {
+
+        showToast(
+            "Please enter the vaccination date.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const duplicate =
+        patient.vaccines.some(
+            v => v.name === name
+        );
+
+    if (duplicate) {
+
+        const proceed =
+            confirm(
+                `⚠️ This patient already has "${name}" in the vaccination history.\n\n` +
+                `Are you sure you want to save another entry?`
+            );
+
+        if (!proceed) return;
+
+    }
+
+    patient.vaccines.push({
+
+        id: generateId("vax"),
+
+        name,
+
+        date,
+
+        lot,
+
+        createdAt: new Date().toISOString()
+
+    });
+
+    patient.skills = patient.skills || {};
+    patient.skills["Write SOAP note"] = true;
+
+    patient.clinicalRecords.push({
+
+        id: generateId("record"),
+
+        type: "Immunization",
+
+        title: name,
+
+        date,
+
+        content:
+            `Vaccine administered. Lot number: ${lot || "Not recorded"}.`,
+
+        createdAt: new Date().toISOString()
+
+    });
+
+    saveAppData();
+
+    renderVaccineHistory();
+
+    renderClinicalRecords();
+
+    checkDuplicateVaccine();
+
+    showToast(
+        "✅ Vaccine record saved successfully."
+    );
+
+}
+
+
+function renderVaccineHistory() {
+
+    const patient =
+        getCurrentPatient();
+
+    const container =
+        document.getElementById(
+            "vaccine-history"
+        );
+
+    container.innerHTML = "";
+
+    if (!patient || !patient.vaccines.length) {
+
+        container.innerHTML = `
+            <p style="color:#6b7280;">
+                No vaccinations recorded for this patient.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    const sorted =
+        [...patient.vaccines].sort(
+            (a,b) =>
+                new Date(b.date) -
+                new Date(a.date)
+        );
+
+    sorted.forEach(vaccine => {
+
+        const typeClass =
+            vaccine.name.toLowerCase().includes("rabies")
+                ? "rabies"
+                : vaccine.name.toLowerCase().includes("dhpp") ||
+                  vaccine.name.toLowerCase().includes("fvrcp")
+                    ? "core"
+                    : "other";
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            `vax-card ${typeClass}`;
+
+        card.style.marginBottom = "10px";
+
+        card.innerHTML = `
+
+            <strong>
+                ${escapeHTML(vaccine.name)}
+            </strong>
+
+            <div style="font-size:0.85rem; margin-top:5px;">
+                Date Given:
+                ${escapeHTML(vaccine.date)}
+            </div>
+
+            <div style="font-size:0.85rem;">
+                Lot:
+                ${escapeHTML(vaccine.lot || "Not recorded")}
+            </div>
+
+            <button
+                class="btn btn-red btn-sm no-print"
+                style="margin-top:8px;"
+                onclick="deleteVaccine('${vaccine.id}')"
+            >
+                Delete Record
+            </button>
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+function deleteVaccine(vaccineId) {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    if (
+        !confirm(
+            "Delete this vaccination record?"
+        )
+    ) return;
+
+    patient.vaccines =
+        patient.vaccines.filter(
+            v => v.id !== vaccineId
+        );
+
+    saveAppData();
+
+    renderVaccineHistory();
+
+    checkDuplicateVaccine();
+
+    showToast(
+        "Vaccination record deleted.",
+        "warning"
+    );
+
+}
+
+
+/* =========================================================
+   SOAP NOTES
+   ========================================================= */
+
+function saveSOAP() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const subjective =
+        document.getElementById(
+            "soap-s"
+        ).value.trim();
+
+    const objective =
+        document.getElementById(
+            "soap-o"
+        ).value.trim();
+
+    const assessment =
+        document.getElementById(
+            "soap-a"
+        ).value.trim();
+
+    const plan =
+        document.getElementById(
+            "soap-p"
+        ).value.trim();
+
+    if (
+        !subjective &&
+        !objective &&
+        !assessment &&
+        !plan
+    ) {
+
+        showToast(
+            "Please enter information into the SOAP note first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const date =
+        new Date().toLocaleString();
+
+    patient.clinicalRecords.push({
+
+        id: generateId("record"),
+
+        type: "SOAP Note",
+
+        title: "SOAP Clinical Note",
+
+        date,
+
+        content: {
+
+            subjective,
+
+            objective,
+
+            assessment,
+
+            plan
+
+        },
+
+        createdAt: new Date().toISOString()
+
+    });
+
+    saveAppData();
+
+    document.getElementById("soap-s").value = "";
+    document.getElementById("soap-o").value = "";
+    document.getElementById("soap-a").value = "";
+    document.getElementById("soap-p").value = "";
+
+    renderClinicalRecords();
+    renderStudentSkills();
+
+    showToast(
+        "✅ SOAP note saved to Clinical Records."
+    );
+
+}
+
+
+/* =========================================================
+   PRESCRIPTIONS
+   ========================================================= */
+
+function savePrescription() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const medication =
+        document.getElementById(
+            "rx-medication"
+        ).value.trim();
+
+    const strength =
+        document.getElementById(
+            "rx-strength"
+        ).value.trim();
+
+    const dose =
+        document.getElementById(
+            "rx-dose"
+        ).value.trim();
+
+    const route =
+        document.getElementById(
+            "rx-route"
+        ).value;
+
+    const frequency =
+        document.getElementById(
+            "rx-frequency"
+        ).value.trim();
+
+    const duration =
+        document.getElementById(
+            "rx-duration"
+        ).value.trim();
+
+    const quantity =
+        document.getElementById(
+            "rx-quantity"
+        ).value.trim();
+
+    const refills =
+        document.getElementById(
+            "rx-refills"
+        ).value;
+
+    const directions =
+        document.getElementById(
+            "rx-directions"
+        ).value.trim();
+
+    const notes =
+        document.getElementById(
+            "rx-notes"
+        ).value.trim();
+
+    if (!medication || !directions) {
+
+        showToast(
+            "Medication and prescription directions are required.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const prescription = {
+
+        id: generateId("rx"),
+
+        medication,
+
+        strength,
+
+        dose,
+
+        route,
+
+        frequency,
+
+        duration,
+
+        quantity,
+
+        refills,
+
+        directions,
+
+        notes,
+
+        date: new Date().toLocaleString(),
+
+        createdAt: new Date().toISOString()
+
+    };
+
+    patient.prescriptions.push(
+        prescription
+    );
+
+    patient.clinicalRecords.push({
+
+        id: generateId("record"),
+
+        type: "Prescription",
+
+        title: medication,
+
+        date: prescription.date,
+
+        content:
+            directions,
+
+        createdAt: new Date().toISOString()
+
+    });
+
+    saveAppData();
+
+    clearPrescriptionForm();
+
+    renderPrescriptionHistory();
+
+    renderClinicalRecords();
+
+    showToast(
+        "✅ Prescription saved to the patient's record."
+    );
+
+}
+
+
+function clearPrescriptionForm() {
+
+    document.getElementById(
+        "rx-medication"
+    ).value = "";
+
+    document.getElementById(
+        "rx-strength"
+    ).value = "";
+
+    document.getElementById(
+        "rx-dose"
+    ).value = "";
+
+    document.getElementById(
+        "rx-route"
+    ).value = "";
+
+    document.getElementById(
+        "rx-frequency"
+    ).value = "";
+
+    document.getElementById(
+        "rx-duration"
+    ).value = "";
+
+    document.getElementById(
+        "rx-quantity"
+    ).value = "";
+
+    document.getElementById(
+        "rx-refills"
+    ).value = "0";
+
+    document.getElementById(
+        "rx-directions"
+    ).value = "";
+
+    document.getElementById(
+        "rx-notes"
+    ).value = "";
+
+}
+
+
+function renderPrescriptionHistory() {
+
+    const patient =
+        getCurrentPatient();
+
+    const container =
+        document.getElementById(
+            "prescription-history"
+        );
+
+    container.innerHTML = "";
+
+    if (
+        !patient ||
+        !patient.prescriptions.length
+    ) {
+
+        container.innerHTML = `
+            <p style="color:#6b7280;">
+                No prescriptions recorded.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    patient.prescriptions
+        .slice()
+        .reverse()
+        .forEach(rx => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "prescription-card";
+
+            card.innerHTML = `
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    gap:10px;
+                ">
+
+                    <strong>
+                        💊 ${escapeHTML(rx.medication)}
+                    </strong>
+
+                    <button
+                        class="btn btn-red btn-sm no-print"
+                        onclick="deletePrescription('${rx.id}')"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+
+                <div style="margin-top:8px; font-size:0.9rem;">
+
+                    <strong>Strength:</strong>
+                    ${escapeHTML(rx.strength || "Not recorded")}
+                    <br>
+
+                    <strong>Dose:</strong>
+                    ${escapeHTML(rx.dose || "Not recorded")}
+                    <br>
+
+                    <strong>Route:</strong>
+                    ${escapeHTML(rx.route || "Not recorded")}
+                    <br>
+
+                    <strong>Frequency:</strong>
+                    ${escapeHTML(rx.frequency || "Not recorded")}
+                    <br>
+
+                    <strong>Duration:</strong>
+                    ${escapeHTML(rx.duration || "Not recorded")}
+                    <br>
+
+                    <strong>Quantity:</strong>
+                    ${escapeHTML(rx.quantity || "Not recorded")}
+                    <br>
+
+                    <strong>Refills:</strong>
+                    ${escapeHTML(rx.refills || "0")}
+
+                </div>
+
+                <div style="
+                    background:white;
+                    border:1px solid #e5e7eb;
+                    padding:10px;
+                    border-radius:5px;
+                    margin-top:10px;
+                ">
+
+                    <strong>Directions / SIG:</strong><br>
+
+                    ${escapeHTML(rx.directions)}
+
+                </div>
+
+                ${
+                    rx.notes
+                        ? `
+                            <div style="
+                                margin-top:8px;
+                                font-size:0.85rem;
+                                color:#6b7280;
+                            ">
+                                <strong>Notes:</strong>
+                                ${escapeHTML(rx.notes)}
+                            </div>
+                        `
+                        : ""
+                }
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+}
+
+
+function deletePrescription(rxId) {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    if (
+        !confirm(
+            "Delete this prescription?"
+        )
+    ) return;
+
+    patient.prescriptions =
+        patient.prescriptions.filter(
+            rx => rx.id !== rxId
+        );
+
+    saveAppData();
+
+    renderPrescriptionHistory();
+
+    showToast(
+        "Prescription deleted.",
+        "warning"
+    );
+
+}
+
+
+/* =========================================================
+   CLINICAL RECORDS
+   ========================================================= */
+
+function renderClinicalRecords() {
+
+    const patient =
+        getCurrentPatient();
+
+    const container =
+        document.getElementById(
+            "clinical-records"
+        );
+
+    container.innerHTML = "";
+
+    if (
+        !patient ||
+        !patient.clinicalRecords.length
+    ) {
+
+        container.innerHTML = `
+            <div class="history-card">
+                <p style="color:#6b7280; margin:0;">
+                    No clinical records saved yet.
+                </p>
+            </div>
+        `;
+
+        return;
+
+    }
+
+    const records =
+        [...patient.clinicalRecords].reverse();
+
+    records.forEach(record => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "history-card";
+
+        let contentHTML = "";
+
+        if (
+            record.type === "SOAP Note" &&
+            typeof record.content === "object"
+        ) {
+
+            contentHTML = `
+
+                <div class="history-sec">
+                    <span class="history-label">S:</span>
+                    ${escapeHTML(record.content.subjective || "—")}
+                </div>
+
+                <div class="history-sec">
+                    <span class="history-label">O:</span>
+                    ${escapeHTML(record.content.objective || "—")}
+                </div>
+
+                <div class="history-sec">
+                    <span class="history-label">A:</span>
+                    ${escapeHTML(record.content.assessment || "—")}
+                </div>
+
+                <div class="history-sec">
+                    <span class="history-label">P:</span>
+                    ${escapeHTML(record.content.plan || "—")}
+                </div>
+
+            `;
+
+        } else {
+
+            contentHTML = `
+                <div style="font-size:0.9rem;">
+                    ${escapeHTML(record.content || "")}
+                </div>
+            `;
+
+        }
+
+        card.innerHTML = `
+
+            <div class="record-header">
+
+                <div>
+                    <span class="record-type">
+                        ${escapeHTML(record.type)}
+                    </span>
+
+                    <strong style="margin-left:8px;">
+                        ${escapeHTML(record.title)}
+                    </strong>
+                </div>
+
+                <small style="color:#6b7280;">
+                    ${escapeHTML(record.date)}
+                </small>
+
+            </div>
+
+            ${contentHTML}
+
+            <button
+                class="btn btn-red btn-sm no-print"
+                onclick="deleteClinicalRecord('${record.id}')"
+            >
+                Delete Record
+            </button>
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+function deleteClinicalRecord(recordId) {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) return;
+
+    if (
+        !confirm(
+            "Delete this clinical record?"
+        )
+    ) return;
+
+    patient.clinicalRecords =
+        patient.clinicalRecords.filter(
+            record =>
+                record.id !== recordId
+        );
+
+    saveAppData();
+
+    renderClinicalRecords();
+
+    showToast(
+        "Clinical record deleted.",
+        "warning"
+    );
+
+}
+
+
+/* =========================================================
+   PRINT MEDICAL RECORD
+   ========================================================= */
+
+function printMedicalRecord() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const vitals =
+        patient.vitals || {};
+
+    const recordsHTML =
+        patient.clinicalRecords
+            .map(record => {
+
+                if (
+                    record.type === "SOAP Note" &&
+                    typeof record.content === "object"
+                ) {
+
+                    return `
+
+                        <div class="print-record">
+
+                            <strong>
+                                ${escapeHTML(record.type)}
+                            </strong>
+
+                            <small>
+                                ${escapeHTML(record.date)}
+                            </small>
+
+                            <p>
+                                <strong>S:</strong>
+                                ${escapeHTML(record.content.subjective || "—")}
+                            </p>
+
+                            <p>
+                                <strong>O:</strong>
+                                ${escapeHTML(record.content.objective || "—")}
+                            </p>
+
+                            <p>
+                                <strong>A:</strong>
+                                ${escapeHTML(record.content.assessment || "—")}
+                            </p>
+
+                            <p>
+                                <strong>P:</strong>
+                                ${escapeHTML(record.content.plan || "—")}
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+
+                return `
+
+                    <div class="print-record">
+
+                        <strong>
+                            ${escapeHTML(record.type)}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(record.date)}
+                        </small>
+
+                        <p>
+                            ${escapeHTML(record.content || "")}
+                        </p>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+    const vaccineHTML =
+        patient.vaccines
+            .map(v => `
+
+                <tr>
+
+                    <td>${escapeHTML(v.name)}</td>
+
+                    <td>${escapeHTML(v.date)}</td>
+
+                    <td>${escapeHTML(v.lot || "N/A")}</td>
+
+                </tr>
+
+            `)
+            .join("");
+
+    const rxHTML =
+        patient.prescriptions
+            .map(rx => `
+
+                <div class="print-record">
+
+                    <strong>
+                        ${escapeHTML(rx.medication)}
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(rx.directions)}
+                    </p>
+
+                    <small>
+                        ${escapeHTML(rx.strength || "")}
+                        |
+                        ${escapeHTML(rx.route || "")}
+                        |
+                        ${escapeHTML(rx.frequency || "")}
+                        |
+                        ${escapeHTML(rx.duration || "")}
+                    </small>
+
+                </div>
+
+            `)
+            .join("");
+
+    const printWindow =
+        window.open("", "_blank");
+
+    printWindow.document.write(`
+
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>
+                ${escapeHTML(patient.name)} - Medical Record
+            </title>
+
+            <style>
+
+                body {
+                    font-family:Arial,sans-serif;
+                    color:#111;
+                    padding:30px;
+                }
+
+                h1 {
+                    margin-bottom:4px;
+                }
+
+                h2 {
+                    border-bottom:2px solid #333;
+                    padding-bottom:5px;
+                    margin-top:25px;
+                }
+
+                table {
+                    width:100%;
+                    border-collapse:collapse;
+                }
+
+                th,
+                td {
+                    border:1px solid #ccc;
+                    padding:8px;
+                    text-align:left;
+                }
+
+                .print-record {
+                    border:1px solid #ddd;
+                    padding:12px;
+                    margin:10px 0;
+                    page-break-inside:avoid;
+                }
+
+                small {
+                    color:#666;
+                }
+
+                .training {
+                    border:2px solid #333;
+                    padding:10px;
+                    margin-bottom:20px;
+                    font-weight:bold;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <div class="training">
+                TRAINING ENVIRONMENT — All patients and records are
+                simulated for educational practice only.
+            </div>
+
+            <h1>
+                ${escapeHTML(patient.name)}
+            </h1>
+
+            <p>
+                <strong>Species:</strong>
+                ${escapeHTML(patient.species)}
+                &nbsp;&nbsp;
+                <strong>Breed:</strong>
+                ${escapeHTML(patient.breed)}
+            </p>
+
+            <h2>Patient Vitals</h2>
+
+            <p>
+                RR: ${escapeHTML(vitals.rr || "N/A")} breaths/min<br>
+                HR: ${escapeHTML(vitals.hr || "N/A")} bpm<br>
+                Weight: ${escapeHTML(vitals.weight || "N/A")} lb<br>
+                Temperature: ${escapeHTML(vitals.temp || "N/A")} °F<br>
+                CRT: ${escapeHTML(vitals.crt || "N/A")}<br>
+                Mucous Membranes: ${escapeHTML(vitals.mm || "N/A")}<br>
+                Mentation: ${escapeHTML(Array.isArray(vitals.mentation) ? vitals.mentation.join(", ") : (vitals.mentation || "N/A"))}<br>
+                BCS: ${escapeHTML(vitals.bcs || "N/A")} / 9<br>
+                Pulse Quality: ${escapeHTML(vitals.pulseQuality || "N/A")}
+            </p>
+
+            <h2>Case Scenario</h2>
+
+            <p>
+                ${escapeHTML(patient.scenario)}
+            </p>
+
+            <h2>Master Problem List</h2>
+
+            <ul>
+
+                ${
+                    patient.problems.length
+                        ? patient.problems.map(p => `
+                            <li>
+                                ${escapeHTML(p.name)}
+                                ${p.resolved ? "(Resolved)" : ""}
+                            </li>
+                        `).join("")
+                        : "<li>No problems documented.</li>"
+                }
+
+            </ul>
+
+            <h2>Vaccination History</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Vaccine</th>
+                        <th>Date</th>
+                        <th>Lot</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${
+                        vaccineHTML ||
+                        `
+                        <tr>
+                            <td colspan="3">
+                                No vaccinations recorded.
+                            </td>
+                        </tr>
+                        `
+                    }
+
+                </tbody>
+
+            </table>
+
+            <h2>Prescriptions</h2>
+
+            ${
+                rxHTML ||
+                "<p>No prescriptions recorded.</p>"
+            }
+
+            <h2>Clinical Records</h2>
+
+            ${
+                recordsHTML ||
+                "<p>No clinical records recorded.</p>"
+            }
+
+            <script>
+
+                window.onload = function() {
+
+                    window.print();
+
+                };
+
+            <\/script>
+
+        </body>
+
+        </html>
+
+    `);
+
+    printWindow.document.close();
+
+}
+
+
+/* =========================================================
+   VACCINE CERTIFICATE
+   ========================================================= */
+
+function printVaccineCertificate() {
+
+    const patient =
+        getCurrentPatient();
+
+    if (!patient) {
+
+        showToast(
+            "Select a patient first.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    if (!patient.vaccines.length) {
+
+        showToast(
+            "This patient has no vaccination records.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const latest =
+        patient.vaccines[
+            patient.vaccines.length - 1
+        ];
+
+    const certificate =
+        window.open("", "_blank");
+
+    certificate.document.write(`
+
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>
+                Veterinary Vaccination Certificate
+            </title>
+
+            <style>
+
+                body {
+                    font-family:Georgia,serif;
+                    padding:50px;
+                    text-align:center;
+                }
+
+                .certificate {
+                    border:8px double #222;
+                    padding:50px;
+                    max-width:800px;
+                    margin:auto;
+                }
+
+                h1 {
+                    font-size:34px;
+                }
+
+                .patient {
+                    font-size:26px;
+                    font-weight:bold;
+                    margin:25px 0;
+                }
+
+                .training {
+                    font-family:Arial,sans-serif;
+                    font-size:13px;
+                    border:1px solid #555;
+                    padding:10px;
+                    margin-bottom:25px;
+                }
+
+                table {
+                    margin:25px auto;
+                    border-collapse:collapse;
+                    width:80%;
+                    font-family:Arial,sans-serif;
+                }
+
+                td {
+                    border:1px solid #aaa;
+                    padding:10px;
+                    text-align:left;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <div class="certificate">
+
+                <div class="training">
+                    TRAINING ENVIRONMENT<br>
+                    This simulated certificate is for
+                    veterinary student educational practice only.
+                </div>
+
+                <h1>
+                    Veterinary Vaccination Certificate
+                </h1>
+
+                <p>
+                    This document records a simulated
+                    vaccination administered within the
+                    VetChart Pro training environment.
+                </p>
+
+                <div class="patient">
+                    ${escapeHTML(patient.name)}
+                </div>
+
+                <p>
+                    ${escapeHTML(patient.species)}
+                    —
+                    ${escapeHTML(patient.breed)}
+                </p>
+
+                <table>
+
+                    <tr>
+                        <td><strong>Vaccine</strong></td>
+                        <td>${escapeHTML(latest.name)}</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Date Given</strong></td>
+                        <td>${escapeHTML(latest.date)}</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>Lot Number</strong></td>
+                        <td>${escapeHTML(latest.lot || "Not recorded")}</td>
+                    </tr>
+
+                </table>
+
+                <p style="margin-top:50px;">
+                    ______________________________
+                </p>
+
+                <p>
+                    Student / Training Signature
+                </p>
+
+            </div>
+
+            <script>
+
+                window.onload = function() {
+
+                    window.print();
+
+                };
+
+            <\/script>
+
+        </body>
+
+        </html>
+
+    `);
+
+    certificate.document.close();
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+function createSampleCasesIfNeeded() {
+
+    if (appData.patients.length > 0) {
+        return;
+    }
+
+    const samplePatients = [
+
+        {
+
+            id: generateId("patient"),
+
+            name: "Bella",
+
+            species: "Canine",
+
+            breed: "Labrador Retriever",
+
+            scenario:
+                "Bella is a 4-year-old spayed female Labrador Retriever presenting for acute vomiting and lethargy. The owner reports three episodes of vomiting since yesterday and decreased appetite. The student should obtain a complete history, perform a physical examination, develop a problem list, and formulate an appropriate assessment and plan.",
+
+            vitals: {
+                rr: "24",
+                hr: "104",
+                weight: "58",
+                temp: "102.1",
+                crt: "<2 sec",
+                mm: "Pink / Moist",
+                mentation: ["BAR"],
+                bcs: "5",
+                pulseQuality: "Strong"
+            },
+            skills: {},
+
+            problems: [],
+
+            vaccines: [],
+
+            prescriptions: [],
+
+            clinicalRecords: [],
+
+            createdAt: new Date().toISOString()
+
+        },
+
+        {
+
+            id: generateId("patient"),
+
+            name: "Milo",
+
+            species: "Feline",
+
+            breed: "Domestic Shorthair",
+
+            scenario:
+                "Milo is a 7-year-old neutered male domestic shorthair cat presenting for inappropriate urination outside the litter box. The owner reports frequent trips to the litter box and vocalization during urination. Practice identifying the major problems and documenting the case appropriately.",
+
+            vitals: {
+                rr: "28",
+                hr: "168",
+                weight: "11.2",
+                temp: "102.4",
+                crt: "<2 sec",
+                mm: "Pink / Moist",
+                mentation: ["BAR"],
+                bcs: "5",
+                pulseQuality: "Strong"
+            },
+            skills: {},
+
+            problems: [],
+
+            vaccines: [],
+
+            prescriptions: [],
+
+            clinicalRecords: [],
+
+            createdAt: new Date().toISOString()
+
+        }
+
+    ];
+
+    appData.patients =
+        samplePatients;
+
+    appData.currentPatientId =
+        samplePatients[0].id;
+
+    saveAppData();
+
+}
+
+
+/* =========================================================
+   DATA MIGRATION
+   ========================================================= */
+
+function migratePatientData() {
+    appData.patients = (appData.patients || []).map(patient => {
+        patient.vitals = patient.vitals || {};
+        patient.vitals.rr = patient.vitals.rr || "";
+        patient.vitals.hr = patient.vitals.hr || "";
+        patient.vitals.weight = patient.vitals.weight || "";
+        patient.vitals.temp = patient.vitals.temp || "";
+        patient.vitals.crt = patient.vitals.crt || "";
+        patient.vitals.mm = patient.vitals.mm || "";
+        patient.vitals.mentation = Array.isArray(patient.vitals.mentation) ? patient.vitals.mentation : (patient.vitals.mentation ? [patient.vitals.mentation] : []);
+        patient.vitals.bcs = patient.vitals.bcs || "";
+        patient.vitals.pulseQuality = patient.vitals.pulseQuality || "";
+        patient.skills = patient.skills || {};
+        patient.problems = patient.problems || [];
+        patient.vaccines = patient.vaccines || [];
+        patient.prescriptions = patient.prescriptions || [];
+        patient.clinicalRecords = patient.clinicalRecords || [];
+        return patient;
+    });
+}
+
+
+/* =========================================================
+   START APPLICATION
+   ========================================================= */
+
+loadAppData();
+migratePatientData();
+saveAppData();
+
+createSampleCasesIfNeeded();
+
+renderPatientRoster();
+
+if (appData.currentPatientId) {
+
+    openPatient(
+        appData.currentPatientId
+    );
+
+} else {
+
+    showEmptyWorkspace();
+
+}
+
+</script>
+
+</body>
+</html>
