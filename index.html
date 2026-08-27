@@ -4550,7 +4550,13 @@ renderPatientRoster = function() {
         renderBinderStats();
         return;
     }
-    appData.patients.forEach(patient => {
+    // The sidebar is intentionally limited to the 4 most recent cases.
+    // The full case library remains available in the Case Binder.
+    const recentPatients = [...appData.patients]
+        .sort((a, b) => new Date(b.createdAt || b.startedAt || 0) - new Date(a.createdAt || a.startedAt || 0))
+        .slice(0, 4);
+
+    recentPatients.forEach(patient => {
         ensureCaseTiming(patient);
         const card = document.createElement("div");
         card.className = "patient-card" + (patient.id === appData.currentPatientId ? " active" : "");
